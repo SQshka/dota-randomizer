@@ -81,7 +81,7 @@ export const useRollLogic = () => {
     } catch { /* noop */ }
   };
 
-  const finishRoll = (final: typeof heroSets[0], rollType?: string) => {
+  const finishRoll = (_final: typeof heroSets[0], rollType?: string) => {
     setIsSpinning(false);
     
     // Reset visible cards to show all after 3 seconds (only for hide-reveal)
