@@ -67,3 +67,25 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* OBS Overlay specific styles for transparency */
+.obs-overlay {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+.obs-overlay * {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+.obs-overlay .hero-display {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Force transparency on all elements for OBS */
+html, body {
+  background-color: transparent !important;
+  background: transparent !important;
+}
