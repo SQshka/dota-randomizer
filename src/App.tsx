@@ -12,6 +12,7 @@ function App() {
   const [isStatsLoaded, setIsStatsLoaded] = useState(false);
   const [durationInput, setDurationInput] = useState<string>('3'); // Default 3 seconds
   const [disabledSets, setDisabledSets] = useState<Set<string>>(new Set());
+  const [obsCopied, setObsCopied] = useState(false);
 
   const getRandomSet = () => {
     const enabledSets = heroSets.filter(set => !disabledSets.has(set.name));
@@ -131,6 +132,27 @@ function App() {
     }
   }, [selectedSet]);
 
+  // Copy hero URL to clipboard
+  const copyHeroUrl = async () => {
+    if (!selectedSet) {
+      alert('No heroes selected! Please roll for heroes first.');
+      return;
+    }
+
+    const baseUrl = window.location.origin;
+    const heroUrls = selectedSet.heroes.join(',');
+    const heroUrl = `${baseUrl}/dota-randomizer/heroes?name=${encodeURIComponent(selectedSet.name)}&heroes=${encodeURIComponent(heroUrls)}`;
+
+    try {
+      await navigator.clipboard.writeText(heroUrl);
+      setObsCopied(true);
+      setTimeout(() => setObsCopied(false), 2000); 
+    } catch (err) {
+      console.error('Failed to copy hero URL:', err);
+      alert('Failed to copy hero URL to clipboard');
+    }
+  };
+
   // Функция для переключения состояния сета
   const toggleSetDisabled = (setName: string) => {
     setDisabledSets(prev => {
@@ -162,11 +184,26 @@ function App() {
       {/* Dark overlay for better text readability */}
       <div className="absolute inset-0 bg-black bg-opacity-50"></div>
       
+
+
       {/* Current Result Display - Top Right Corner */}
       {selectedSet && (
         <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-20 bg-black/80 backdrop-blur-sm border-2 border-yellow-400/50 rounded-lg p-2 sm:p-4 shadow-2xl">
           <div className="text-center">
-            <h2 className="text-white font-semibold text-xs sm:text-sm mb-1">Текущие герои</h2>
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <h2 className="text-white font-semibold text-xs sm:text-sm">Текущие герои</h2>
+              <button
+                onClick={copyHeroUrl}
+                className={`px-2 py-1 rounded text-xs font-medium border transition-all duration-200 ${
+                  obsCopied
+                    ? 'bg-green-500/80 text-white border-green-400/50'
+                    : 'bg-blue-500/80 text-white border-blue-400/50 hover:bg-blue-400/90 hover:scale-105'
+                }`}
+                title="Copy Hero URL for OBS"
+              >
+                {obsCopied ? 'Copied' : 'OBS'}
+              </button>
+            </div>
             <h3 className="text-yellow-300 font-bold text-xs sm:text-sm mb-1 sm:mb-2">{selectedSet.name}</h3>
             <div className="flex justify-center items-center gap-0.5 sm:gap-1">
               {selectedSet.heroes.map((hero, index) => (
