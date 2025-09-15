@@ -8,17 +8,54 @@ interface HeroSet {
 
 const OBSOverlay = () => {
   const [selectedSet, setSelectedSet] = useState<HeroSet | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
 
-  // Listen for custom events to sync with main app
+  // Listen for custom events to sync with main app (same tab)
   useEffect(() => {
     const handleSetChange = (event: CustomEvent) => {
       setSelectedSet(event.detail);
+      setIsConnected(true);
     };
 
     window.addEventListener('heroSetChanged', handleSetChange as EventListener);
     
     return () => {
       window.removeEventListener('heroSetChanged', handleSetChange as EventListener);
+    };
+  }, []);
+
+  // Listen for localStorage changes for cross-tab synchronization
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'currentSelectedSet' && event.newValue) {
+        try {
+          const parsed = JSON.parse(event.newValue);
+          setSelectedSet(parsed);
+          setIsConnected(true);
+        } catch { /* noop */ }
+      }
+    };
+
+    // Also listen for our custom update trigger
+    const handleCustomStorageChange = () => {
+      try {
+        const currentSetRaw = localStorage.getItem('currentSelectedSet');
+        if (currentSetRaw) {
+          const parsed = JSON.parse(currentSetRaw);
+          setSelectedSet(parsed);
+          setIsConnected(true);
+        }
+      } catch { /* noop */ }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Poll for updates (fallback for same-origin issues)
+    const interval = setInterval(handleCustomStorageChange, 100);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
     };
   }, []);
 
@@ -71,7 +108,10 @@ const OBSOverlay = () => {
         }}
       >
         <div className="text-center">
-          <h2 className="text-white font-semibold text-sm mb-1">Текущие герои</h2>
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <h2 className="text-white font-semibold text-sm">Текущие герои</h2>
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} title={isConnected ? 'Подключено' : 'Ожидание подключения'}></div>
+          </div>
           {selectedSet ? (
             <>
               <h3 className="text-yellow-300 font-bold text-sm mb-2">{selectedSet.name}</h3>

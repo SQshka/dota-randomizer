@@ -52,8 +52,13 @@ function App() {
       // Меняем подсветку набора
       const newSet = getRandomSet();
       setSelectedSet(newSet);
-      // Dispatch custom event for OBS overlay
+      // Dispatch custom event for OBS overlay (same tab)
       window.dispatchEvent(new CustomEvent('heroSetChanged', { detail: newSet }));
+      // Also update localStorage for cross-tab synchronization
+      try {
+        localStorage.setItem('currentSelectedSet', JSON.stringify(newSet));
+        localStorage.setItem('heroSetUpdate', Date.now().toString());
+      } catch { /* noop */ }
 
       if (progress < 1) {
         setTimeout(step, currentDelay);
@@ -61,8 +66,13 @@ function App() {
         // Финальный выбор
         const final = getRandomSet();
         setSelectedSet(final);
-        // Dispatch custom event for OBS overlay
+        // Dispatch custom event for OBS overlay (same tab)
         window.dispatchEvent(new CustomEvent('heroSetChanged', { detail: final }));
+        // Also update localStorage for cross-tab synchronization
+        try {
+          localStorage.setItem('currentSelectedSet', JSON.stringify(final));
+          localStorage.setItem('heroSetUpdate', Date.now().toString());
+        } catch { /* noop */ }
         setFinalResultText(`Результат: ${final.name}`);
         // Обновляем статистику сетов (процент выпадения каждого набора)
         setSetStats(prev => ({
