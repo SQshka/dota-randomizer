@@ -21,7 +21,7 @@ const HeroSet: React.FC<HeroSetProps> = ({ name, heroes, isSelected, percentage 
     <div
       onClick={handleClick}
       className={`
-        relative p-4 rounded-lg shadow-lg transition-all duration-300 transform cursor-pointer
+        relative p-4 rounded-lg shadow-lg transition-transform duration-300 cursor-pointer
         backdrop-blur-sm border-2
         ${isDisabled 
           ? 'bg-gray-600/40 border-gray-500/50 opacity-50' 

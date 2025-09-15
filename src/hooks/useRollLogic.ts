@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { heroSets } from '../data/heroSets';
 
-export const useRollLogic = () => {
+export const useRollLogic = (disabledSets: Set<string>) => {
   const [selectedSet, setSelectedSet] = useState<typeof heroSets[0] | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [visibleCards, setVisibleCards] = useState<Set<string>>(new Set(heroSets.map(set => set.name)));
@@ -18,8 +18,13 @@ export const useRollLogic = () => {
   };
 
   const getRandomSet = () => {
-    const randomIndex = Math.floor(Math.random() * heroSets.length);
-    return heroSets[randomIndex];
+    const enabledSets = heroSets.filter(set => !disabledSets.has(set.name));
+    if (enabledSets.length === 0) {
+      const randomIndex = Math.floor(Math.random() * heroSets.length);
+      return heroSets[randomIndex];
+    }
+    const randomIndex = Math.floor(Math.random() * enabledSets.length);
+    return enabledSets[randomIndex];
   };
 
   const getRandomRollType = () => {

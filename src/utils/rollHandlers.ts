@@ -3,6 +3,7 @@ import { heroSets } from '../data/heroSets';
 
 export const createRollHandlers = (
   disabledSets: Set<string>,
+  shuffledHeroSets: typeof heroSets,
   setSelectedSet: (set: typeof heroSets[0]) => void,
   updateSetInStorage: (set: typeof heroSets[0]) => void,
   finishRoll: (final: typeof heroSets[0], rollType?: string) => void,
@@ -12,8 +13,8 @@ export const createRollHandlers = (
   setVisibleCards: (cards: Set<string>) => void
 ) => {
   const handleLeftToRightRoll = (totalDurationMs: number) => {
-    const enabledSets = heroSets.filter(set => !disabledSets.has(set.name));
-    const setsToUse = enabledSets.length > 0 ? enabledSets : heroSets;
+    const enabledSets = shuffledHeroSets.filter(set => !disabledSets.has(set.name));
+    const setsToUse = enabledSets.length > 0 ? enabledSets : shuffledHeroSets;
     const leftToRightOrder = getTopToBottomOrder(setsToUse);
     
     const startTime = performance.now();
@@ -64,8 +65,8 @@ export const createRollHandlers = (
   };
 
   const handleRightToLeftRoll = (totalDurationMs: number) => {
-    const enabledSets = heroSets.filter(set => !disabledSets.has(set.name));
-    const setsToUse = enabledSets.length > 0 ? enabledSets : heroSets;
+    const enabledSets = shuffledHeroSets.filter(set => !disabledSets.has(set.name));
+    const setsToUse = enabledSets.length > 0 ? enabledSets : shuffledHeroSets;
     const leftToRightOrder = getTopToBottomOrder(setsToUse);
     
     const startTime = performance.now();
@@ -116,8 +117,8 @@ export const createRollHandlers = (
   };
 
   const handleUpToDownRoll = (totalDurationMs: number) => {
-    const enabledSets = heroSets.filter(set => !disabledSets.has(set.name));
-    const setsToUse = enabledSets.length > 0 ? enabledSets : heroSets;
+    const enabledSets = shuffledHeroSets.filter(set => !disabledSets.has(set.name));
+    const setsToUse = enabledSets.length > 0 ? enabledSets : shuffledHeroSets;
     const columnByColumnOrder = getColumnByColumnOrder(setsToUse);
     
     const startTime = performance.now();
@@ -168,8 +169,8 @@ export const createRollHandlers = (
   };
 
   const handleBottomToTopRoll = (totalDurationMs: number) => {
-    const enabledSets = heroSets.filter(set => !disabledSets.has(set.name));
-    const setsToUse = enabledSets.length > 0 ? enabledSets : heroSets;
+    const enabledSets = shuffledHeroSets.filter(set => !disabledSets.has(set.name));
+    const setsToUse = enabledSets.length > 0 ? enabledSets : shuffledHeroSets;
     const columnByColumnOrder = getColumnByColumnOrder(setsToUse);
     
     const startTime = performance.now();
@@ -220,8 +221,8 @@ export const createRollHandlers = (
   };
 
   const handleHideRevealRoll = (totalDurationMs: number) => {
-    const enabledSets = heroSets.filter(set => !disabledSets.has(set.name));
-    const setsToUse = enabledSets.length > 0 ? enabledSets : heroSets;
+    const enabledSets = shuffledHeroSets.filter(set => !disabledSets.has(set.name));
+    const setsToUse = enabledSets.length > 0 ? enabledSets : shuffledHeroSets;
     
     const startTime = performance.now();
     let remainingSets = [...setsToUse];

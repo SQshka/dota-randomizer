@@ -14,6 +14,14 @@ function App() {
   const [durationInput, setDurationInput] = useState<string>('10');
   const [obsCopied, setObsCopied] = useState(false);
 
+  const {
+    setStats,
+    setSetStats,
+    disabledSets,
+    setDisabledSets,
+    resetStats
+  } = useLocalStorage();
+
   // Custom hooks
   const {
     selectedSet,
@@ -31,33 +39,7 @@ function App() {
     getColumnByColumnOrder,
     updateSetInStorage,
     finishRoll
-  } = useRollLogic();
-
-  const {
-    setStats,
-    setSetStats,
-    disabledSets,
-    setDisabledSets,
-    resetStats
-  } = useLocalStorage();
-
-  // Create roll handlers
-  const rollHandlers = createRollHandlers(
-    disabledSets,
-    setSelectedSet,
-    updateSetInStorage,
-    (final, rollType) => {
-      setSetStats(prev => ({
-        ...prev,
-        [final.name]: (prev[final.name] ?? 0) + 1,
-      }));
-      finishRoll(final, rollType);
-    },
-    getRandomSet,
-    getTopToBottomOrder,
-    getColumnByColumnOrder,
-    setVisibleCards
-  );
+  } = useRollLogic(disabledSets);
 
   const handleSpin = () => {
     if (isSpinning) return;
@@ -66,7 +48,27 @@ function App() {
     setSelectedSet(null);
 
     // Shuffle hero positions for each roll
-    setShuffledHeroSets(shuffleArray(heroSets));
+    const newShuffledSets = shuffleArray(heroSets);
+    setShuffledHeroSets(newShuffledSets);
+
+    // Create roll handlers with the new shuffled sets
+    const rollHandlers = createRollHandlers(
+      disabledSets,
+      newShuffledSets,
+      setSelectedSet,
+      updateSetInStorage,
+      (final, rollType) => {
+        setSetStats(prev => ({
+          ...prev,
+          [final.name]: (prev[final.name] ?? 0) + 1,
+        }));
+        finishRoll(final, rollType);
+      },
+      getRandomSet,
+      getTopToBottomOrder,
+      getColumnByColumnOrder,
+      setVisibleCards
+    );
 
     // Select random roll type
     const rollType = getRandomRollType();
