@@ -9,6 +9,7 @@ interface HeroSet {
 const OBSOverlay = () => {
   const [selectedSet, setSelectedSet] = useState<HeroSet | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Listen for custom events to sync with main app (same tab)
   useEffect(() => {
@@ -32,7 +33,9 @@ const OBSOverlay = () => {
           const parsed = JSON.parse(event.newValue);
           setSelectedSet(parsed);
           setIsConnected(true);
-        } catch { /* noop */ }
+        } catch (error) {
+          console.error('Error parsing storage event:', error);
+        }
       }
     };
 
@@ -45,13 +48,15 @@ const OBSOverlay = () => {
           setSelectedSet(parsed);
           setIsConnected(true);
         }
-      } catch { /* noop */ }
+      } catch (error) {
+        console.error('Error in storage polling:', error);
+      }
     };
 
     window.addEventListener('storage', handleStorageChange);
     
-    // Poll for updates (fallback for same-origin issues)
-    const interval = setInterval(handleCustomStorageChange, 100);
+    // Poll for updates (fallback for same-origin issues) - reduced frequency
+    const interval = setInterval(handleCustomStorageChange, 1000);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -67,10 +72,15 @@ const OBSOverlay = () => {
       if (currentSetRaw) {
         const parsed = JSON.parse(currentSetRaw);
         setSelectedSet(parsed);
+        setIsConnected(true);
       }
-    } catch { /* noop */ }
+    } catch (error) {
+      console.error('Error loading initial set from localStorage:', error);
+      setError('Failed to load initial data');
+    }
   }, []);
 
+  // Always render something, even if there are errors
   return (
     <>
       <style>
@@ -112,7 +122,12 @@ const OBSOverlay = () => {
             <h2 className="text-white font-semibold text-sm">Текущие герои</h2>
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} title={isConnected ? 'Подключено' : 'Ожидание подключения'}></div>
           </div>
-          {selectedSet ? (
+          {error ? (
+            <>
+              <h3 className="text-red-400 font-bold text-sm mb-2">Ошибка</h3>
+              <p className="text-red-300 text-xs">{error}</p>
+            </>
+          ) : selectedSet ? (
             <>
               <h3 className="text-yellow-300 font-bold text-sm mb-2">{selectedSet.name}</h3>
               <div className="flex justify-center items-center gap-1">
