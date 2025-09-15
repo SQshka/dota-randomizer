@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import HeroSet from './components/HeroSet';
 import { heroSets } from './data/heroSets';
+import backgroundImage from './assets/img/the-international-2025-wallpaper-v0-42ifx3d9h78f1.webp';
 
 function App() {
   const [selectedSet, setSelectedSet] = useState<typeof heroSets[0] | null>(null);
@@ -95,7 +96,7 @@ function App() {
     <div 
       className="min-h-screen py-12 flex flex-col items-center relative"
       style={{
-        backgroundImage: 'url(/src/assets/img/the-international-2025-wallpaper-v0-42ifx3d9h78f1.webp)',
+        backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
