@@ -25,7 +25,7 @@ export const heroSets = [
       ]
     },
     {
-        name: 'Любимчики кекса',
+        name: 'Любимчики Кекса',
         heroes: [
           'https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/venomancer_full.png',
           'https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/necrolyte_full.png',
@@ -33,7 +33,7 @@ export const heroSets = [
         ]
       },
       {
-        name: 'Любимчики кекса 2',
+        name: 'Любимчики Кекса 2',
         heroes: [
           'https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/snapfire_full.png',
           'https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/kez_full.png',
@@ -81,7 +81,7 @@ export const heroSets = [
         ]
       },
       {
-        name: 'Пивандетулы',
+        name: 'Пивандепулы',
         heroes: [
           'https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/ogre_magi_full.png',
           'https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/spirit_breaker_full.png',
