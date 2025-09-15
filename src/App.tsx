@@ -1,136 +1,109 @@
 // src/App.tsx
-import { useEffect, useMemo, useState } from 'react';
-import HeroSet from './components/HeroSet';
+import { useMemo, useState } from 'react';
 import { heroSets } from './data/heroSets';
 import backgroundImage from './assets/img/the-international-2025-wallpaper-v0-42ifx3d9h78f1.webp';
+import { useRollLogic } from './hooks/useRollLogic';
+import { useLocalStorage } from './hooks/useLocalStorage';
+import { createRollHandlers } from './utils/rollHandlers';
+import RollControls from './components/RollControls';
+import CurrentResult from './components/CurrentResult';
+import HeroGrid from './components/HeroGrid';
+import ResetButton from './components/ResetButton';
 
 function App() {
-  const [selectedSet, setSelectedSet] = useState<typeof heroSets[0] | null>(null);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [finalResultText, setFinalResultText] = useState<string | null>(null);
-  const [setStats, setSetStats] = useState<Record<string, number>>({});
-  const [isStatsLoaded, setIsStatsLoaded] = useState(false);
-  const [durationInput, setDurationInput] = useState<string>('3'); // Default 3 seconds
-  const [disabledSets, setDisabledSets] = useState<Set<string>>(new Set());
+  const [durationInput, setDurationInput] = useState<string>('10');
   const [obsCopied, setObsCopied] = useState(false);
 
-  const getRandomSet = () => {
-    const enabledSets = heroSets.filter(set => !disabledSets.has(set.name));
-    if (enabledSets.length === 0) {
-      const randomIndex = Math.floor(Math.random() * heroSets.length);
-      return heroSets[randomIndex];
-    }
-    const randomIndex = Math.floor(Math.random() * enabledSets.length);
-    return enabledSets[randomIndex];
-  };
+  // Custom hooks
+  const {
+    selectedSet,
+    setSelectedSet,
+    isSpinning,
+    setIsSpinning,
+    visibleCards,
+    setVisibleCards,
+    shuffledHeroSets,
+    setShuffledHeroSets,
+    getRandomSet,
+    getRandomRollType,
+    shuffleArray,
+    getTopToBottomOrder,
+    getColumnByColumnOrder,
+    updateSetInStorage,
+    finishRoll
+  } = useRollLogic();
+
+  const {
+    setStats,
+    setSetStats,
+    disabledSets,
+    setDisabledSets,
+    resetStats
+  } = useLocalStorage();
+
+  // Create roll handlers
+  const rollHandlers = createRollHandlers(
+    disabledSets,
+    setSelectedSet,
+    updateSetInStorage,
+    (final, rollType) => {
+      setSetStats(prev => ({
+        ...prev,
+        [final.name]: (prev[final.name] ?? 0) + 1,
+      }));
+      finishRoll(final, rollType);
+    },
+    getRandomSet,
+    getTopToBottomOrder,
+    getColumnByColumnOrder,
+    setVisibleCards
+  );
 
   const handleSpin = () => {
     if (isSpinning) return;
 
     setIsSpinning(true);
     setSelectedSet(null);
-    setFinalResultText(null);
 
-    const durationSeconds = durationInput.trim() === '' ? 3 : parseInt(durationInput, 10);
-    const totalDurationMs = Math.max(1000, durationSeconds * 1000); 
-    const minDelayMs = 60; // начальная скорость (быстро)
-    const maxDelayMs = 350; // финальная скорость (медленно)
+    // Shuffle hero positions for each roll
+    setShuffledHeroSets(shuffleArray(heroSets));
 
-    const startTime = performance.now();
+    // Select random roll type
+    const rollType = getRandomRollType();
 
-    const step = () => {
-      const now = performance.now();
-      const elapsed = now - startTime;
-      const progress = Math.min(1, elapsed / totalDurationMs);
+    // Only reset visible cards for hide-reveal roll
+    if (rollType === 'hide-reveal') {
+      setVisibleCards(new Set(heroSets.map(set => set.name)));
+    }
 
-      // easeOutCubic: быстро вначале, замедляясь к концу
-      const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
-      const eased = easeOutCubic(progress);
+    const durationSeconds = durationInput.trim() === '' ? 10 : parseInt(durationInput, 10);
+    const totalDurationMs = Math.max(10000, durationSeconds * 1000);
 
-      // Чем больше прогресс, тем больше задержка между сменами (т.е. медленнее)
-      const currentDelay = minDelayMs + (maxDelayMs - minDelayMs) * eased;
-
-      // Меняем подсветку набора
-      const newSet = getRandomSet();
-      setSelectedSet(newSet);
-      // Dispatch custom event for OBS overlay (same tab)
-      window.dispatchEvent(new CustomEvent('heroSetChanged', { detail: newSet }));
-      // Also update localStorage for cross-tab synchronization
-      try {
-        localStorage.setItem('currentSelectedSet', JSON.stringify(newSet));
-        localStorage.setItem('heroSetUpdate', Date.now().toString());
-      } catch { /* noop */ }
-
-      if (progress < 1) {
-        setTimeout(step, currentDelay);
-      } else {
-        // Финальный выбор
-        const final = getRandomSet();
-        setSelectedSet(final);
-        // Dispatch custom event for OBS overlay (same tab)
-        window.dispatchEvent(new CustomEvent('heroSetChanged', { detail: final }));
-        // Also update localStorage for cross-tab synchronization
-        try {
-          localStorage.setItem('currentSelectedSet', JSON.stringify(final));
-          localStorage.setItem('heroSetUpdate', Date.now().toString());
-        } catch { /* noop */ }
-        setFinalResultText(`Результат: ${final.name}`);
-        // Обновляем статистику сетов (процент выпадения каждого набора)
-        setSetStats(prev => ({
-          ...prev,
-          [final.name]: (prev[final.name] ?? 0) + 1,
-        }));
-        setIsSpinning(false);
-      }
-    };
-
-    // Первый шаг сразу
-    setTimeout(step, minDelayMs);
+    switch (rollType) {
+      case 'left-to-right':
+        rollHandlers.handleLeftToRightRoll(totalDurationMs);
+        break;
+      case 'up-to-down':
+        rollHandlers.handleUpToDownRoll(totalDurationMs);
+        break;
+      case 'hide-reveal':
+        rollHandlers.handleHideRevealRoll(totalDurationMs);
+        break;
+      case 'right-to-left':
+        rollHandlers.handleRightToLeftRoll(totalDurationMs);
+        break;
+      case 'bottom-to-top':
+        rollHandlers.handleBottomToTopRoll(totalDurationMs);
+        break;
+      default:
+        rollHandlers.handleOriginalRoll(totalDurationMs);
+    }
   };
 
-  // Загружаем статистику сетов и отключенные сеты из localStorage при монтировании
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('setStats');
-      if (raw) {
-        const parsed = JSON.parse(raw) as Record<string, number>;
-        setSetStats(parsed);
-      }
-      
-      const disabledRaw = localStorage.getItem('disabledSets');
-      if (disabledRaw) {
-        const parsed = JSON.parse(disabledRaw) as string[];
-        setDisabledSets(new Set(parsed));
-      }
-      
-      setIsStatsLoaded(true);
-    } catch { /* noop */ }
-  }, []);
-
-  // Сохраняем статистику сетов в localStorage при изменении
-  useEffect(() => {
-    if (!isStatsLoaded) return;
-    try {
-      localStorage.setItem('setStats', JSON.stringify(setStats));
-    } catch { /* noop */ }
-  }, [setStats, isStatsLoaded]);
-
-  // Сохраняем отключенные сеты в localStorage при изменении
-  useEffect(() => {
-    if (!isStatsLoaded) return;
-    try {
-      localStorage.setItem('disabledSets', JSON.stringify(Array.from(disabledSets)));
-    } catch { /* noop */ }
-  }, [disabledSets, isStatsLoaded]);
-
-  // Сохраняем текущий выбранный сет в localStorage при изменении
-  useEffect(() => {
-    if (selectedSet) {
-      try {
-        localStorage.setItem('currentSelectedSet', JSON.stringify(selectedSet));
-      } catch { /* noop */ }
-    }
-  }, [selectedSet]);
+  // Calculate total rolls for percentage
+  const totalSetRolls = useMemo(() => {
+    return Object.values(setStats).reduce((sum, n) => sum + n, 0);
+  }, [setStats]);
 
   // Copy hero URL to clipboard
   const copyHeroUrl = async () => {
@@ -153,7 +126,7 @@ function App() {
     }
   };
 
-  // Функция для переключения состояния сета
+  // Toggle set disabled state
   const toggleSetDisabled = (setName: string) => {
     setDisabledSets(prev => {
       const newSet = new Set(prev);
@@ -165,11 +138,6 @@ function App() {
       return newSet;
     });
   };
-
-  // Вспомогательные расчёты
-  const totalSetRolls = useMemo(() => {
-    return Object.values(setStats).reduce((sum, n) => sum + n, 0);
-  }, [setStats]);
 
   return (
     <div 
@@ -184,137 +152,38 @@ function App() {
       {/* Dark overlay for better text readability */}
       <div className="absolute inset-0 bg-black bg-opacity-50"></div>
       
-
-
-      {/* Current Result Display - Top Right Corner */}
-      {selectedSet && (
-        <div className="fixed top-2 right-2 sm:top-4 sm:right-4 z-20 bg-black/80 backdrop-blur-sm border-2 border-yellow-400/50 rounded-lg p-2 sm:p-4 shadow-2xl">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <h2 className="text-white font-semibold text-xs sm:text-sm">Текущие герои</h2>
-              <button
-                onClick={copyHeroUrl}
-                className={`px-2 py-1 rounded text-xs font-medium border transition-all duration-200 ${
-                  obsCopied
-                    ? 'bg-green-500/80 text-white border-green-400/50'
-                    : 'bg-blue-500/80 text-white border-blue-400/50 hover:bg-blue-400/90 hover:scale-105'
-                }`}
-                title="Copy Hero URL for OBS"
-              >
-                {obsCopied ? 'Copied' : 'OBS'}
-              </button>
-            </div>
-            <h3 className="text-yellow-300 font-bold text-xs sm:text-sm mb-1 sm:mb-2">{selectedSet.name}</h3>
-            <div className="flex justify-center items-center gap-0.5 sm:gap-1">
-              {selectedSet.heroes.map((hero, index) => (
-                <img
-                  key={index}
-                  src={hero}
-                  alt={`Hero ${index + 1}`}
-                  className="w-8 h-8 sm:w-12 sm:h-12 rounded-full border-2 border-yellow-300/50 object-cover object-center hover:scale-110 transition-transform duration-200"
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Current Result Display */}
+      <CurrentResult
+        selectedSet={selectedSet}
+        obsCopied={obsCopied}
+        onCopyHeroUrl={copyHeroUrl}
+      />
       
       <div className="relative z-10 w-full flex flex-col items-center">
-      <div className="text-center mb-12">
-        <h1 className="text-5xl md:text-6xl font-extrabold text-white leading-tight mb-4">
-          EvillyRU Challenge
-        </h1>
-        <p className="text-lg text-gray-300 mb-6">
-          Случайный выбор набора героев для вашей следующей игры.
-        </p>
+        {/* Roll Controls */}
+        <RollControls
+          durationInput={durationInput}
+          setDurationInput={setDurationInput}
+          isSpinning={isSpinning}
+          onSpin={handleSpin}
+        />
         
-         {/* Duration Input */}
-         <div className="flex flex-col items-center gap-3">
-           <label className="text-white font-semibold text-lg">
-             Длительность вращения (секунды):
-           </label>
-           <div className="flex items-center gap-3">
-             <input
-               type="number"
-               value={durationInput}
-               onChange={(e) => setDurationInput(e.target.value)}
-               disabled={isSpinning}
-               min="1"
-               placeholder="3"
-               className={`
-                 w-24 px-3 py-2 rounded-lg font-medium text-center
-                 border-2 backdrop-blur-sm transition-all duration-200
-                 bg-white/20 text-white border-white/30
-                 placeholder:text-white/60
-                 focus:outline-none focus:border-yellow-300/50 focus:bg-white/30
-                 ${isSpinning ? 'opacity-50 cursor-not-allowed' : 'hover:border-white/50'}
-               `}
-             />
-             <span className="text-white/80 text-sm">сек</span>
-           </div>
-         </div>
-      </div>
-      
-      <button
-        onClick={handleSpin}
-        disabled={isSpinning}
-        className={`
-          px-8 py-4 mb-12 rounded-full font-bold text-xl
-          transition-all duration-300 backdrop-blur-sm
-          border-2 shadow-2xl
-          ${isSpinning
-            ? 'bg-gray-500/70 text-gray-300 cursor-not-allowed border-gray-400/50'
-            : 'bg-gradient-to-r from-yellow-400/90 to-orange-400/90 text-purple-900 border-yellow-300/50 hover:scale-105 hover:from-yellow-300/90 hover:to-orange-300/90 hover:border-yellow-200/70 hover:shadow-yellow-400/25'
-          }
-        `}
-      >
-        {isSpinning ? 'Крутим...' : 'Испытать удачу!'}
-      </button>
-
-      {!isSpinning && finalResultText && (
-        <div className="mb-8 text-center">
-          <p className="text-2xl font-bold text-yellow-300 drop-shadow-sm">{finalResultText}</p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 w-full px-4">
-        {heroSets.map((set, index) => {
-          const count = setStats[set.name] ?? 0;
-          const percent = totalSetRolls > 0 ? (count / totalSetRolls) * 100 : 0;
-          return (
-            <HeroSet
-              key={index}
-              name={set.name}
-              heroes={set.heroes}
-              isSelected={selectedSet?.name === set.name}
-              percentage={percent}
-              isDisabled={disabledSets.has(set.name)}
-              onToggleDisabled={() => toggleSetDisabled(set.name)}
-            />
-          );
-        })}
-      </div>
-      
-      {/* Reset Stats Button */}
-      <button
-        onClick={() => {
-          setSetStats({});
-          setDisabledSets(new Set());
-          localStorage.removeItem('setStats');
-          localStorage.removeItem('disabledSets');
-        }}
-        disabled={isSpinning}
-        className={`
-          px-3 py-1.5 rounded text-xs font-medium mt-8
-          transition-all duration-200 backdrop-blur-sm border
-          ${isSpinning 
-            ? 'bg-gray-500/50 text-gray-400 cursor-not-allowed border-gray-400/30'
-            : 'bg-red-500/80 text-white border-red-400/50 hover:bg-red-400/90 hover:border-red-300/70 hover:scale-105'
-          }
-        `}
-      >
-        Сброс статистики и настроек
-      </button>
+        {/* Hero Grid */}
+        <HeroGrid
+          shuffledHeroSets={shuffledHeroSets}
+          selectedSet={selectedSet}
+          setStats={setStats}
+          totalSetRolls={totalSetRolls}
+          visibleCards={visibleCards}
+          disabledSets={disabledSets}
+          onToggleDisabled={toggleSetDisabled}
+        />
+        
+        {/* Reset Button */}
+        <ResetButton
+          isSpinning={isSpinning}
+          onReset={resetStats}
+        />
       </div>
     </div>
   );
