@@ -11,22 +11,27 @@ function App() {
   const [setStats, setSetStats] = useState<Record<string, number>>({});
   const [isStatsLoaded, setIsStatsLoaded] = useState(false);
   const [durationInput, setDurationInput] = useState<string>('3'); // Default 3 seconds
+  const [disabledSets, setDisabledSets] = useState<Set<string>>(new Set());
 
   const getRandomSet = () => {
-    const randomIndex = Math.floor(Math.random() * heroSets.length);
-    return heroSets[randomIndex];
+    const enabledSets = heroSets.filter(set => !disabledSets.has(set.name));
+    if (enabledSets.length === 0) {
+      const randomIndex = Math.floor(Math.random() * heroSets.length);
+      return heroSets[randomIndex];
+    }
+    const randomIndex = Math.floor(Math.random() * enabledSets.length);
+    return enabledSets[randomIndex];
   };
 
   const handleSpin = () => {
     if (isSpinning) return;
 
     setIsSpinning(true);
-    setSelectedSet(null); // Сбрасываем выбор для начала анимации
+    setSelectedSet(null);
     setFinalResultText(null);
 
-    // Parse duration input, default to 3 seconds if empty or invalid
     const durationSeconds = durationInput.trim() === '' ? 3 : parseInt(durationInput, 10);
-    const totalDurationMs = Math.max(1000, durationSeconds * 1000); // Minimum 1 second, no upper limit
+    const totalDurationMs = Math.max(1000, durationSeconds * 1000); 
     const minDelayMs = 60; // начальная скорость (быстро)
     const maxDelayMs = 350; // финальная скорость (медленно)
 
@@ -67,7 +72,7 @@ function App() {
     setTimeout(step, minDelayMs);
   };
 
-  // Загружаем статистику сетов из localStorage при монтировании
+  // Загружаем статистику сетов и отключенные сеты из localStorage при монтировании
   useEffect(() => {
     try {
       const raw = localStorage.getItem('setStats');
@@ -75,6 +80,13 @@ function App() {
         const parsed = JSON.parse(raw) as Record<string, number>;
         setSetStats(parsed);
       }
+      
+      const disabledRaw = localStorage.getItem('disabledSets');
+      if (disabledRaw) {
+        const parsed = JSON.parse(disabledRaw) as string[];
+        setDisabledSets(new Set(parsed));
+      }
+      
       setIsStatsLoaded(true);
     } catch { /* noop */ }
   }, []);
@@ -86,6 +98,27 @@ function App() {
       localStorage.setItem('setStats', JSON.stringify(setStats));
     } catch { /* noop */ }
   }, [setStats, isStatsLoaded]);
+
+  // Сохраняем отключенные сеты в localStorage при изменении
+  useEffect(() => {
+    if (!isStatsLoaded) return;
+    try {
+      localStorage.setItem('disabledSets', JSON.stringify(Array.from(disabledSets)));
+    } catch { /* noop */ }
+  }, [disabledSets, isStatsLoaded]);
+
+  // Функция для переключения состояния сета
+  const toggleSetDisabled = (setName: string) => {
+    setDisabledSets(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(setName)) {
+        newSet.delete(setName);
+      } else {
+        newSet.add(setName);
+      }
+      return newSet;
+    });
+  };
 
   // Вспомогательные расчёты
   const totalSetRolls = useMemo(() => {
@@ -173,6 +206,8 @@ function App() {
               heroes={set.heroes}
               isSelected={selectedSet?.name === set.name}
               percentage={percent}
+              isDisabled={disabledSets.has(set.name)}
+              onToggleDisabled={() => toggleSetDisabled(set.name)}
             />
           );
         })}
@@ -182,7 +217,9 @@ function App() {
       <button
         onClick={() => {
           setSetStats({});
+          setDisabledSets(new Set());
           localStorage.removeItem('setStats');
+          localStorage.removeItem('disabledSets');
         }}
         disabled={isSpinning}
         className={`
@@ -194,7 +231,7 @@ function App() {
           }
         `}
       >
-        Сброс статистики
+        Сброс статистики и настроек
       </button>
       </div>
     </div>
