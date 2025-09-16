@@ -35,13 +35,17 @@ const HeroSet: React.FC<HeroSetProps> = ({ name, heroes, isSelected, percentage 
       let plain = true;
       let bgColor: string | undefined;
       let bgOpacity: number | undefined;
+      let showTitle: boolean | undefined;
+      let showSetName: boolean | undefined;
       try {
         const raw = localStorage.getItem('obsSettings');
         if (raw) {
-          const parsed = JSON.parse(raw) as { plain?: boolean; bgColor?: string; bgOpacity?: number };
+          const parsed = JSON.parse(raw) as { plain?: boolean; bgColor?: string; bgOpacity?: number; showTitle?: boolean; showSetName?: boolean };
           if (typeof parsed.plain === 'boolean') plain = parsed.plain;
           if (typeof parsed.bgColor === 'string') bgColor = parsed.bgColor;
           if (typeof parsed.bgOpacity === 'number') bgOpacity = parsed.bgOpacity;
+          if (typeof parsed.showTitle === 'boolean') showTitle = parsed.showTitle;
+          if (typeof parsed.showSetName === 'boolean') showSetName = parsed.showSetName;
         }
       } catch { /* noop */ }
       const params: string[] = [];
@@ -51,6 +55,8 @@ const HeroSet: React.FC<HeroSetProps> = ({ name, heroes, isSelected, percentage 
         if (bgColor) params.push(`bgColor=${encodeURIComponent(bgColor)}`);
         if (typeof bgOpacity === 'number') params.push(`bgOpacity=${encodeURIComponent(String(bgOpacity))}`);
       }
+      if (showTitle === false) params.push('showTitle=0');
+      if (showSetName === false) params.push('showSetName=0');
       const queryTail = params.length ? `&${params.join('&')}` : '';
       const heroUrl = `${baseUrl}/dota-randomizer/heroes?name=${encodeURIComponent(name)}&heroes=${encodeURIComponent(heroUrls)}${queryTail}`;
       await navigator.clipboard.writeText(heroUrl);

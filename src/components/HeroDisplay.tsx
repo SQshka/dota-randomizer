@@ -19,6 +19,8 @@ const HeroDisplay = () => {
   const [isPlain, setIsPlain] = useState<boolean>(false);
   const [bgColor, setBgColor] = useState<string>('#000000');
   const [bgOpacity, setBgOpacity] = useState<number>(0.8);
+  const [showTitle, setShowTitle] = useState<boolean>(true);
+  const [showSetName, setShowSetName] = useState<boolean>(true);
 
   useEffect(() => {
     try {
@@ -42,6 +44,10 @@ const HeroDisplay = () => {
           }
         }
       }
+      const showTitleParam = searchParams.get('showTitle');
+      if (showTitleParam === '0' || showTitleParam === 'false') setShowTitle(false);
+      const showSetNameParam = searchParams.get('showSetName');
+      if (showSetNameParam === '0' || showSetNameParam === 'false') setShowSetName(false);
 
       if (name && heroes) {
         const heroUrls = heroes.split(',');
@@ -97,8 +103,12 @@ const HeroDisplay = () => {
             </>
           ) : heroSet ? (
             <>
-              <h2 className={`font-semibold text-lg mb-2 ${isPlain ? 'text-white' : 'text-white'}`}>Текущие герои</h2>
-              <h3 className={`${isPlain ? 'text-white' : 'text-yellow-300'} font-bold text-xl mb-4`}>{heroSet.name}</h3>
+              {showTitle && (
+                <h2 className={`font-semibold text-lg mb-2 ${isPlain ? 'text-white' : 'text-white'}`}>Текущие герои</h2>
+              )}
+              {showSetName && (
+                <h3 className={`text-yellow-300 font-bold text-xl mb-4`}>{heroSet.name}</h3>
+              )}
               <div className="flex justify-center items-center gap-3">
                 {heroSet.heroes.map((hero, index) => (
                   <img

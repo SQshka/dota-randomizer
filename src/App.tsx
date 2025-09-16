@@ -162,6 +162,8 @@ function App() {
       if (obsSettings.bgColor) params.push(`bgColor=${encodeURIComponent(obsSettings.bgColor)}`);
       if (typeof obsSettings.bgOpacity === 'number') params.push(`bgOpacity=${encodeURIComponent(String(obsSettings.bgOpacity))}`);
     }
+    if (obsSettings.showTitle === false) params.push('showTitle=0');
+    if (obsSettings.showSetName === false) params.push('showSetName=0');
     const queryTail = params.length ? `&${params.join('&')}` : '';
     const heroUrl = `${baseUrl}/dota-randomizer/heroes?name=${encodeURIComponent(selectedSet.name)}&heroes=${encodeURIComponent(heroUrls)}${queryTail}`;
 

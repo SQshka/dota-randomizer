@@ -5,6 +5,8 @@ export interface ObsSettings {
   plain: boolean;
   bgColor?: string; // Hex color, e.g. #000000
   bgOpacity?: number; // 0..1
+  showTitle?: boolean;
+  showSetName?: boolean;
 }
 
 interface ObsSettingsModalProps {
@@ -18,11 +20,15 @@ const ObsSettingsModal: React.FC<ObsSettingsModalProps> = ({ open, initialSettin
   const [plain, setPlain] = useState<boolean>(initialSettings.plain);
   const [bgColor, setBgColor] = useState<string>(initialSettings.bgColor ?? '#000000');
   const [bgOpacity, setBgOpacity] = useState<number>(typeof initialSettings.bgOpacity === 'number' ? initialSettings.bgOpacity : 0.8);
+  const [showTitle, setShowTitle] = useState<boolean>(initialSettings.showTitle ?? true);
+  const [showSetName, setShowSetName] = useState<boolean>(initialSettings.showSetName ?? true);
 
   useEffect(() => {
     setPlain(initialSettings.plain);
     setBgColor(initialSettings.bgColor ?? '#000000');
     setBgOpacity(typeof initialSettings.bgOpacity === 'number' ? initialSettings.bgOpacity : 0.8);
+    setShowTitle(initialSettings.showTitle ?? true);
+    setShowSetName(initialSettings.showSetName ?? true);
   }, [initialSettings]);
 
   if (!open) return null;
@@ -38,6 +44,27 @@ const ObsSettingsModal: React.FC<ObsSettingsModalProps> = ({ open, initialSettin
         <h2 className="text-xl font-bold mb-4">Настройки OBS</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="space-y-4">
+            <div className="space-y-3">
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={showTitle}
+                  onChange={(e) => setShowTitle(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                <span>Показывать заголовок</span>
+              </label>
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={showSetName}
+                  onChange={(e) => setShowSetName(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                <span>Показывать название набора</span>
+              </label>
+              <div className="h-px bg-white/10" />
+            </div>
             <label className="flex items-center gap-3">
               <input
                 type="checkbox"
@@ -82,7 +109,7 @@ const ObsSettingsModal: React.FC<ObsSettingsModalProps> = ({ open, initialSettin
                 Отмена
               </button>
               <button
-                onClick={() => onSave({ plain, bgColor, bgOpacity })}
+                onClick={() => onSave({ plain, bgColor, bgOpacity, showTitle, showSetName })}
                 className="px-4 py-2 rounded font-semibold bg-blue-500/80 border border-blue-400/60 hover:bg-blue-400/90"
               >
                 Сохранить
@@ -98,8 +125,8 @@ const ObsSettingsModal: React.FC<ObsSettingsModalProps> = ({ open, initialSettin
                 minHeight: '160px'
               }}
             >
-              <h3 className="font-semibold text-lg mb-2">Текущие герои</h3>
-              <h4 className="text-yellow-300 font-bold text-base mb-4">Название набора</h4>
+              {showTitle && <h3 className="font-semibold text-lg mb-2">Текущие герои</h3>}
+              {showSetName && <h4 className="text-yellow-300 font-bold text-base mb-4">Название набора</h4>}
               <div className="flex justify-center items-center gap-3">
                 {[0,1,2].map((i) => (
                   <div
