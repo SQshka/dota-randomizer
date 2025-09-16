@@ -1,5 +1,5 @@
 // src/components/HeroSet.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import dota2Logo from '../assets/img/dota2.png';
 
 interface HeroSetProps {
@@ -19,9 +19,26 @@ interface HeroSetProps {
  * and a back-face when used in reverse-reveal mode.
  */
 const HeroSet: React.FC<HeroSetProps> = ({ name, heroes, isSelected, percentage = 0, isDisabled = false, onToggleDisabled, appearanceMode = 'normal', isRevealed = true }) => {
+  const [obsCopied, setObsCopied] = useState(false);
+
   const handleClick = () => {
     if (onToggleDisabled) {
       onToggleDisabled();
+    }
+  };
+
+  const handleCopyObsUrl: React.MouseEventHandler<HTMLButtonElement> = async (e) => {
+    e.stopPropagation();
+    try {
+      const baseUrl = window.location.origin;
+      const heroUrls = heroes.join(',');
+      const heroUrl = `${baseUrl}/dota-randomizer/heroes?name=${encodeURIComponent(name)}&heroes=${encodeURIComponent(heroUrls)}`;
+      await navigator.clipboard.writeText(heroUrl);
+      setObsCopied(true);
+      setTimeout(() => setObsCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy hero URL:', err);
+      alert('Failed to copy hero URL to clipboard');
     }
   };
 
@@ -46,6 +63,19 @@ const HeroSet: React.FC<HeroSetProps> = ({ name, heroes, isSelected, percentage 
         <div className="absolute top-2 right-2 bg-black/60 text-yellow-300 text-xs font-bold px-2 py-1 rounded" title="Процент ролла">
           {Math.round(percentage)}%
         </div>
+      )}
+      {(appearanceMode !== 'reverse' || isRevealed) && (
+        <button
+          onClick={handleCopyObsUrl}
+          className={`absolute bottom-2 right-2 px-2 py-1 rounded text-xs font-medium border transition-all duration-200 ${
+            obsCopied
+              ? 'bg-green-500/80 text-white border-green-400/50'
+              : 'bg-blue-500/80 text-white border-blue-400/50 hover:bg-blue-400/90 hover:scale-105'
+          }`}
+          title="Copy Hero URL for OBS"
+        >
+          {obsCopied ? 'Copied' : 'OBS'}
+        </button>
       )}
       {isDisabled && (
         <div className="absolute top-2 left-2 bg-red-600/80 text-white text-xs font-bold px-2 py-1 rounded" title="Отключен">
