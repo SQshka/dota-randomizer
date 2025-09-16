@@ -7,6 +7,11 @@ interface HeroSet {
   heroes: string[];
 }
 
+/**
+ * HeroDisplay
+ * OBS-friendly view that reads the current hero set from URL params
+ * and renders a compact, transparent overlay.
+ */
 const HeroDisplay = () => {
   const [searchParams] = useSearchParams();
   const [heroSet, setHeroSet] = useState<HeroSet | null>(null);
@@ -14,7 +19,6 @@ const HeroDisplay = () => {
 
   useEffect(() => {
     try {
-      // Get hero data from URL parameters
       const name = searchParams.get('name');
       const heroes = searchParams.get('heroes');
       

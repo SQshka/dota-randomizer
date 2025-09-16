@@ -2,19 +2,26 @@
 import { useState } from 'react';
 import { heroSets } from '../data/heroSets';
 
+/**
+ * useRollLogic
+ * Encapsulates state and helpers for rolling hero sets, including
+ * selection state, roll type, visibility/reveal management, and storage sync.
+ */
 export const useRollLogic = (disabledSets: Set<string>) => {
   const [selectedSet, setSelectedSet] = useState<typeof heroSets[0] | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [visibleCards, setVisibleCards] = useState<Set<string>>(new Set(heroSets.map(set => set.name)));
   const [shuffledHeroSets, setShuffledHeroSets] = useState<typeof heroSets>(heroSets);
+  const [currentRollType, setCurrentRollType] = useState<string | null>(null);
+  const [revealedCards, setRevealedCards] = useState<Set<string>>(new Set());
 
-  // Roll types
   const rollTypes = {
     'left-to-right': 'Слева направо',
     'up-to-down': 'Сверху вниз', 
     'hide-reveal': 'Скрыть и показать',
     'right-to-left': 'Справа налево',
-    'bottom-to-top': 'Снизу вверх'
+    'bottom-to-top': 'Снизу вверх',
+    'reverse-reveal': 'Обратное раскрытие'
   };
 
   const getRandomSet = () => {
@@ -42,9 +49,8 @@ export const useRollLogic = (disabledSets: Set<string>) => {
     return shuffled;
   };
 
-  // Calculate visual order from top to bottom based on grid layout (row by row)
   const getTopToBottomOrder = (sets: typeof heroSets) => {
-    const cols = 5; // Assume xl screen size (5 columns)
+    const cols = 5;
     const rows = Math.ceil(sets.length / cols);
     
     const orderedSets = [];
@@ -59,9 +65,8 @@ export const useRollLogic = (disabledSets: Set<string>) => {
     return orderedSets;
   };
 
-  // Calculate visual order column by column (up to down)
   const getColumnByColumnOrder = (sets: typeof heroSets) => {
-    const cols = 5; // Assume xl screen size (5 columns)
+    const cols = 5;
     const rows = Math.ceil(sets.length / cols);
     
     const orderedSets = [];
@@ -77,9 +82,7 @@ export const useRollLogic = (disabledSets: Set<string>) => {
   };
 
   const updateSetInStorage = (set: typeof heroSets[0]) => {
-    // Dispatch custom event for OBS overlay (same tab)
     window.dispatchEvent(new CustomEvent('heroSetChanged', { detail: set }));
-    // Also update localStorage for cross-tab synchronization
     try {
       localStorage.setItem('currentSelectedSet', JSON.stringify(set));
       localStorage.setItem('heroSetUpdate', Date.now().toString());
@@ -88,11 +91,18 @@ export const useRollLogic = (disabledSets: Set<string>) => {
 
   const finishRoll = (_final: typeof heroSets[0], rollType?: string) => {
     setIsSpinning(false);
+    if (rollType) setCurrentRollType(rollType);
     
-    // Reset visible cards to show all after 3 seconds (only for hide-reveal)
     if (rollType === 'hide-reveal') {
       setTimeout(() => {
         setVisibleCards(new Set(heroSets.map(set => set.name)));
+      }, 1500);
+    }
+
+    if (rollType === 'reverse-reveal') {
+      setTimeout(() => {
+        setRevealedCards(new Set());
+        setCurrentRollType(null);
       }, 1500);
     }
   };
@@ -112,6 +122,10 @@ export const useRollLogic = (disabledSets: Set<string>) => {
     getTopToBottomOrder,
     getColumnByColumnOrder,
     updateSetInStorage,
-    finishRoll
+    finishRoll,
+    currentRollType,
+    setCurrentRollType,
+    revealedCards,
+    setRevealedCards
   };
 };

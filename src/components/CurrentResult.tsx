@@ -8,6 +8,11 @@ interface CurrentResultProps {
   onCopyHeroUrl: () => void;
 }
 
+/**
+ * CurrentResult
+ * Compact floating card that shows the latest selected hero set
+ * and offers a one-click OBS URL copy action.
+ */
 const CurrentResult: React.FC<CurrentResultProps> = ({
   selectedSet,
   obsCopied,
