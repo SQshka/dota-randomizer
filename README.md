@@ -1,69 +1,62 @@
-# React + TypeScript + Vite
+# Dota 2 Randomizer (RU)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Лёгкое веб-приложение для случайного выбора сетов героев Dota 2 с несколькими анимациями. Подходит для стримеров и проведения ивентов, есть режим оверлея для OBS.
 
-Currently, two official plugins are available:
+## Возможности
+- Несколько типов анимации: слева→направо, справа→налево, сверху→вниз, снизу→вверх, скрыть→показать, обратное раскрытие
+- Возможность отключить выбранные сеты перед роллом
+- Подсветка выбранного сета и оверлей-сетка
+- Кнопка для копирования ссылки (подходит для OBS)
+- Состояние сохраняется в `localStorage` и синхронизируется кастомными событиями
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Быстрый старт
 
-## Expanding the ESLint configuration
+Требования: Node 18+
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Откройте адрес из терминала.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Скрипты
+- `npm run dev`: запуск dev-сервера Vite
+- `npm run build`: сборка в `dist/`
+- `npm run preview`: предпросмотр production-сборки
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Как пользоваться
+1. Задайте длительность ролла (в секундах).
+2. По желанию отключите некоторые сеты (клик по карточке).
+3. Нажмите Roll.
+4. В виджете “Текущие герои” нажмите OBS, чтобы скопировать ссылку оверлея.
+
+### Оверлей для OBS
+Минимальная страница с прозрачным фоном для вывода текущих героев.
+
+- Скопируйте ссылку через кнопку OBS или соберите вручную:
+  - Шаблон: `https://<ваш-хост>/dota-randomizer/heroes?name=<имяСета>&heroes=<url1,url2,url3>`
+  - Пример: `https://ваш-сайт/dota-randomizer/heroes?name=Комбо%201&heroes=https%3A%2F%2F...%2Faxe.png,https%3A%2F%2F...%2Flion.png,https%3A%2F%2F...%2Fcm.png`
+- В OBS добавьте Browser Source с этой ссылкой. Фон будет прозрачным.
+
+Примечание: Страницу оверлея можно открыть и в браузере — она отобразит текущий результат.
+
+## Структура проекта (кратко)
+- `src/components/` — UI-компоненты (`HeroGrid`, `HeroSet`, `CurrentResult` и т.д.)
+- `src/hooks/` — логика состояния (`useRollLogic`)
+- `src/utils/` — утилиты (`animation`, `rollHandlers`)
+- `src/data/` — данные сетов героев
+
+## Заметки по разработке
+- Тайминги анимаций вынесены в `src/utils/animation.ts`
+  - Общая функция сглаживания и задержки, зависящие от длительности
+- Последовательности роллов реализованы в `src/utils/rollHandlers.ts`
+- Для обратного и скрыть→показать используется шаг и финальная задержка на основе длительности
+
+## Деплой
+Подходит любой статический хост (GitHub Pages, Netlify, Vercel и др.).
+
+1. Сборка: `npm run build`
+2. Загрузите папку `dist/` на хостинг
+
+Для GitHub Pages при деплое в подпуть не забудьте настроить базовый путь (Vite `base`).
