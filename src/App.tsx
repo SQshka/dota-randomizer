@@ -9,6 +9,7 @@ import RollControls from './components/RollControls';
 import CurrentResult from './components/CurrentResult';
 import HeroGrid from './components/HeroGrid';
 import ResetButton from './components/ResetButton';
+import ObsSettingsModal, { type ObsSettings } from './components/ObsSettingsModal';
 
 /**
  * App
@@ -24,6 +25,14 @@ function App() {
     }
   });
   const [obsCopied, setObsCopied] = useState(false);
+  const [isObsModalOpen, setIsObsModalOpen] = useState(false);
+  const [obsSettings, setObsSettings] = useState<ObsSettings>(() => {
+    try {
+      const raw = localStorage.getItem('obsSettings');
+      if (raw) return JSON.parse(raw) as ObsSettings;
+    } catch { /* noop */ }
+    return { plain: true };
+  });
 
   // Persist duration to localStorage when it changes
   useEffect(() => {
@@ -31,6 +40,13 @@ function App() {
       localStorage.setItem('rollDurationSeconds', durationInput || '10');
     } catch { /* noop */ }
   }, [durationInput]);
+
+  // Persist OBS settings
+  useEffect(() => {
+    try {
+      localStorage.setItem('obsSettings', JSON.stringify(obsSettings));
+    } catch { /* noop */ }
+  }, [obsSettings]);
 
   const {
     setStats,
@@ -139,7 +155,15 @@ function App() {
 
     const baseUrl = window.location.origin;
     const heroUrls = selectedSet.heroes.join(',');
-    const heroUrl = `${baseUrl}/dota-randomizer/heroes?name=${encodeURIComponent(selectedSet.name)}&heroes=${encodeURIComponent(heroUrls)}`;
+    const params: string[] = [];
+    if (obsSettings.plain) {
+      params.push('plain=1');
+    } else {
+      if (obsSettings.bgColor) params.push(`bgColor=${encodeURIComponent(obsSettings.bgColor)}`);
+      if (typeof obsSettings.bgOpacity === 'number') params.push(`bgOpacity=${encodeURIComponent(String(obsSettings.bgOpacity))}`);
+    }
+    const queryTail = params.length ? `&${params.join('&')}` : '';
+    const heroUrl = `${baseUrl}/dota-randomizer/heroes?name=${encodeURIComponent(selectedSet.name)}&heroes=${encodeURIComponent(heroUrls)}${queryTail}`;
 
     try {
       await navigator.clipboard.writeText(heroUrl);
@@ -206,6 +230,12 @@ function App() {
           isSpinning={isSpinning}
           onSpin={handleSpin}
         />
+        <button
+          onClick={() => setIsObsModalOpen(true)}
+          className="relative z-10 px-4 py-2 -mt-8 mb-8 rounded-full font-medium border-2 border-yellow-300/50 bg-black/40 text-white hover:border-yellow-200/70 hover:scale-105"
+        >
+          Настройки OBS
+        </button>
         
         <HeroGrid
           shuffledHeroSets={shuffledHeroSets}
@@ -222,6 +252,12 @@ function App() {
         <ResetButton
           isSpinning={isSpinning}
           onReset={resetStats}
+        />
+        <ObsSettingsModal
+          open={isObsModalOpen}
+          initialSettings={obsSettings}
+          onClose={() => setIsObsModalOpen(false)}
+          onSave={(s) => { setObsSettings(s); setIsObsModalOpen(false); }}
         />
       </div>
     </div>

@@ -32,7 +32,27 @@ const HeroSet: React.FC<HeroSetProps> = ({ name, heroes, isSelected, percentage 
     try {
       const baseUrl = window.location.origin;
       const heroUrls = heroes.join(',');
-      const heroUrl = `${baseUrl}/dota-randomizer/heroes?name=${encodeURIComponent(name)}&heroes=${encodeURIComponent(heroUrls)}`;
+      let plain = true;
+      let bgColor: string | undefined;
+      let bgOpacity: number | undefined;
+      try {
+        const raw = localStorage.getItem('obsSettings');
+        if (raw) {
+          const parsed = JSON.parse(raw) as { plain?: boolean; bgColor?: string; bgOpacity?: number };
+          if (typeof parsed.plain === 'boolean') plain = parsed.plain;
+          if (typeof parsed.bgColor === 'string') bgColor = parsed.bgColor;
+          if (typeof parsed.bgOpacity === 'number') bgOpacity = parsed.bgOpacity;
+        }
+      } catch { /* noop */ }
+      const params: string[] = [];
+      if (plain) {
+        params.push('plain=1');
+      } else {
+        if (bgColor) params.push(`bgColor=${encodeURIComponent(bgColor)}`);
+        if (typeof bgOpacity === 'number') params.push(`bgOpacity=${encodeURIComponent(String(bgOpacity))}`);
+      }
+      const queryTail = params.length ? `&${params.join('&')}` : '';
+      const heroUrl = `${baseUrl}/dota-randomizer/heroes?name=${encodeURIComponent(name)}&heroes=${encodeURIComponent(heroUrls)}${queryTail}`;
       await navigator.clipboard.writeText(heroUrl);
       setObsCopied(true);
       setTimeout(() => setObsCopied(false), 2000);
@@ -67,7 +87,7 @@ const HeroSet: React.FC<HeroSetProps> = ({ name, heroes, isSelected, percentage 
       {(appearanceMode !== 'reverse' || isRevealed) && (
         <button
           onClick={handleCopyObsUrl}
-          className={`absolute bottom-2 right-2 px-2 py-1 rounded text-xs font-medium border transition-all duration-200 ${
+          className={`absolute bottom-2 right-2 px-2 py-1 rounded text-xs font-medium border transition-all duration-200 focus:outline-none focus:ring-0 ${
             obsCopied
               ? 'bg-green-500/80 text-white border-green-400/50'
               : 'bg-blue-500/80 text-white border-blue-400/50 hover:bg-blue-400/90 hover:scale-105'
