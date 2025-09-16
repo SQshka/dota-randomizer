@@ -26,7 +26,7 @@ const RollControls: React.FC<RollControlsProps> = ({
       {/* Duration Input */}
       <div className="flex flex-col items-center gap-3">
         <label className="text-white font-semibold text-lg">
-          Длительность вращения (минимум 10 секунд):
+          Длительность вращения (минимум 15 секунд):
         </label>
         <div className="flex items-center gap-3 ml-8">
           <input
@@ -34,8 +34,8 @@ const RollControls: React.FC<RollControlsProps> = ({
             value={durationInput}
             onChange={(e) => setDurationInput(e.target.value)}
             disabled={isSpinning}
-            min="1"
-            placeholder="3"
+            min="15"
+            placeholder="15"
             className={`
               w-24 px-3 py-2 rounded-lg font-medium text-center
               border-2 backdrop-blur-sm transition-all duration-200

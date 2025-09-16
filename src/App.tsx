@@ -19,9 +19,9 @@ function App() {
   const [durationInput, setDurationInput] = useState<string>(() => {
     try {
       const saved = localStorage.getItem('rollDurationSeconds');
-      return saved && typeof saved === 'string' ? saved : '10';
+      return saved && typeof saved === 'string' ? saved : '15';
     } catch {
-      return '10';
+      return '15';
     }
   });
   const [obsCopied, setObsCopied] = useState(false);
@@ -37,7 +37,7 @@ function App() {
   // Persist duration to localStorage when it changes
   useEffect(() => {
     try {
-      localStorage.setItem('rollDurationSeconds', durationInput || '10');
+      localStorage.setItem('rollDurationSeconds', durationInput || '15');
     } catch { /* noop */ }
   }, [durationInput]);
 
@@ -116,8 +116,8 @@ function App() {
       setRevealedCards
     );
 
-    const durationSeconds = durationInput.trim() === '' ? 10 : parseInt(durationInput, 10);
-    const totalDurationMs = Math.max(10000, durationSeconds * 1000);
+    const durationSeconds = durationInput.trim() === '' ? 15 : parseInt(durationInput, 10);
+    const totalDurationMs = Math.max(15000, durationSeconds * 1000);
 
     switch (rollType) {
       case 'left-to-right':
