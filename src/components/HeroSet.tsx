@@ -1,5 +1,6 @@
 // src/components/HeroSet.tsx
 import React from 'react';
+import dota2Logo from '../assets/img/dota2.png';
 
 interface HeroSetProps {
   name: string;
@@ -57,7 +58,7 @@ const HeroSet: React.FC<HeroSetProps> = ({ name, heroes, isSelected, percentage 
           {[0,1,2].map((i) => (
             <img
               key={i}
-              src={'public/dota2.png'}
+              src={dota2Logo}
               alt="Dota 2"
               className="w-16 h-16 rounded-full mx-1 border-2 border-white/30 object-cover object-center shrink-0 bg-black/40"
             />
