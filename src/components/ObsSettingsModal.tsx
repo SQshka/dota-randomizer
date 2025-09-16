@@ -41,7 +41,10 @@ const ObsSettingsModal: React.FC<ObsSettingsModalProps> = ({ open, initialSettin
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative z-10 w-full max-w-3xl mx-4 rounded-lg border-2 border-yellow-400/40 bg-black/80 backdrop-blur-sm p-6 text-white">
-        <h2 className="text-xl font-bold mb-4">Настройки OBS</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 items-center mb-4">
+          <h2 className="text-xl font-bold md:col-start-1 md:justify-self-start">Настройки OBS</h2>
+          <h3 className="text-lg font-bold text-white/90 md:col-start-2 md:justify-self-center ml-5 mt-2 md:mt-0">Пример отображения</h3>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="space-y-4">
             <div className="space-y-3">
